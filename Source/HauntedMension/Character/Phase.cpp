@@ -46,9 +46,6 @@ APhase::APhase()
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
 
-	CharacterMovement = GetCharacterMovement();
-	CharacterMovement->MaxWalkSpeed = 150.f;
-
 	StatComponent = CreateDefaultSubobject<UAttributeComponent>("Attributes");
 
 	TraceComponent = CreateDefaultSubobject<UTraceComponent>("TraceComponent");
@@ -86,8 +83,6 @@ void APhase::BeginPlay()
 
 	if (Weapon)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Weapon"));
-
 		if (!IsSequenceUse)
 		{
 			DefaultWeapon = GetWorld()->SpawnActor<AWeapon>(Weapon);
@@ -106,14 +101,6 @@ void APhase::BeginPlay()
 
 void APhase::InitializeComponent()
 {
-
-	HMController = HMController == nullptr ? Cast<AHMController>(Controller) : HMController;
-	if (HMController)
-	{
-		HMController->SetHUDHealth(StatComponent->GetHealthPercent());
-		HMController->SetHUDStamina(StatComponent->GetStaminaPercent());
-	}
-
 	UpdateHUDAmmo();
 
 	UpdateHUDCarriedAmmo();
@@ -156,13 +143,12 @@ void APhase::Jump(const FInputActionValue& Value)
 
 void APhase::RunPressed()
 {
-
-	CharacterMovement->MaxWalkSpeed = 600.f;
+	GetCharacterMovement()->MaxWalkSpeed = 600.f;
 }
 
 void APhase::RunReleased()
 {
-	CharacterMovement->MaxWalkSpeed = 150.f;
+	GetCharacterMovement()->MaxWalkSpeed = 150.f;
 }
 
 void APhase::HideMeshifCameraClose()
@@ -182,7 +168,6 @@ void APhase::HideMeshifCameraClose()
 void APhase::SetOverlappingInteractitem(AInteract* Interact)
 {
 	InteractItem = TScriptInterface<IInteractInterface>(Interact);
-
 }
 
 void APhase::InteractPressed()
@@ -298,9 +283,9 @@ void APhase::FlashOnOffPressed()
 void APhase::PlayPickUpMontage()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && PickupMontage && CharacterMovement)
+	if (AnimInstance && PickupMontage && GetCharacterMovement())
 	{
-		CharacterMovement->DisableMovement();
+		GetCharacterMovement()->DisableMovement();
 		ActionState = EActionState::EAS_PickUp;
 		HMController->DisableInput(PlayerController);
 		AnimInstance->Montage_Play(PickupMontage);
@@ -313,9 +298,9 @@ void APhase::PlayReloadMontage()
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance)
 	{
-		if (ReloadMontage && CharacterMovement)
+		if (ReloadMontage && GetCharacterMovement())
 		{
-			CharacterMovement->DisableMovement();
+			GetCharacterMovement()->DisableMovement();
 			AnimInstance->Montage_Play(ReloadMontage);
 		}
 	}
@@ -323,7 +308,7 @@ void APhase::PlayReloadMontage()
 	FOnMontageEnded MontageEnd;
 	MontageEnd.BindWeakLambda(this, [this](UAnimMontage* Animmontage, bool bInterrupted)
 		{
-			if (bInterrupted) // �����ϴ� �߰��� �ǰ��� ���.
+			if (bInterrupted) 
 			{
 				ActionState = EActionState::EAS_Unoccupied;
 				GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
@@ -374,7 +359,7 @@ void APhase::ReloadPressed()
 void APhase::FinishReload()
 {
 	ActionState = EActionState::EAS_Unoccupied;
-	if (CharacterMovement) CharacterMovement->SetMovementMode(EMovementMode::MOVE_Walking);
+	if (GetCharacterMovement()) GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 
 	UpdateHUDAmmo();
 	UpdateHUDCarriedAmmo();
@@ -485,8 +470,6 @@ void APhase::GetHit_Implementation(const FVector& ImpactPoint)
 		{
 			PlayHitMontage(ImpactPoint);
 
-			OnHealthChanged.Broadcast();
-
 			if (HitSound)
 			{
 				UGameplayStatics::PlaySoundAtLocation(
@@ -502,20 +485,6 @@ void APhase::GetHit_Implementation(const FVector& ImpactPoint)
 			GetWorld()->GetTimerManager().SetTimer(HitHandle, [this]() {GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking); }, HitDelay, false);
 		}
 	}
-
-	/*HMController = HMController == nullptr ? Cast<AHMController>(Controller) : HMController;
-	if (HMController)
-	{
-		HMController->SetHUDHealth(StatComponent->GetHealth());
-	}*/
-
-	//if (HitSound)
-	//{
-	//	UGameplayStatics::PlaySoundAtLocation(
-	//		GetWorld(),
-	//		HitSound,
-	//		ImpactPoint);
-	//}
 }
 
 void APhase::SetActionState()
@@ -566,7 +535,7 @@ void APhase::AimOffset(float DeltaTime)
 {
 
 	Speed = CalculateSpeed();
-	bool IsFalling = CharacterMovement->IsFalling();
+	bool IsFalling = GetCharacterMovement()->IsFalling();
 
 	if (Speed == 0.f && !IsFalling)
 	{
@@ -639,9 +608,9 @@ bool APhase::CanReload()
 
 void APhase::EndPickUp()
 {
-	if (CharacterMovement)
+	if (GetCharacterMovement())
 	{
-		CharacterMovement->SetMovementMode(EMovementMode::MOVE_Walking);
+		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 		ActionState = EActionState::EAS_Unoccupied;
 
 	}
@@ -669,7 +638,6 @@ void APhase::Die()
 		GetCharacterMovement()->bOrientRotationToMovement = false;
 		GetCharacterMovement()->DisableMovement();
 
-		//ActorHasTag(FName("Dead"));
 		Tags.Add(FName(TEXT("Dead")));
 
 		HMController->SetHUDDie();
@@ -753,6 +721,5 @@ void APhase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(AimReleasedAction, ETriggerEvent::Triggered, this, &APhase::AimReleased);
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Triggered, this, &APhase::FirePressed);
 		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &APhase::ReloadPressed);
-
 	}
 }

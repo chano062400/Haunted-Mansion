@@ -15,6 +15,18 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHealthChanged);
 class IInteractInterface;
 class UPawnNoiseEmitterComponent;
 class UTraceComponent;
+class AWeapon;
+class UCameraComponent;
+class AFlashLight;
+class UInputAction;
+class UInputMappingContext;
+class UAnimMontage;
+class USoundBase;
+class AHMController;
+class AHMHUD;
+class UHMOverlay;
+class USpringArmComponent;
+
 UCLASS()
 class HAUNTEDMENSION_API APhase : public ACharacter, public IHitInterface
 {
@@ -29,24 +41,21 @@ public:
 
 	void SetOverlappingInteractitem(class AInteract* Interact);
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AWeapon> Weapon;
-
 	void PlayPickUpMontage();
 
-	UPROPERTY(BlueprintAssignable, BlueprintReadOnly)
-	FOnHealthChanged OnHealthChanged;
+	void FlashOnOffPressed();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	EKeyState KeyState = EKeyState::EKS_UnEquippedKey;
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
-	class UCameraComponent* Camera;
+	TObjectPtr<UCameraComponent> Camera;
 
 	UPROPERTY(VisibleAnywhere)
-	class AFlashLight* EquippedFlashLight;
+	TObjectPtr<AFlashLight> EquippedFlashLight;
 
-	void FlashOnOffPressed();
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AWeapon> Weapon;
 
 protected:
 	virtual void BeginPlay() override;
@@ -83,7 +92,7 @@ protected:
 
 	void TraceCrossHair(FHitResult& TraceHitResult);
 
-	virtual void GetHit_Implementation(const FVector& ImpactPoint) override; // �������Ʈ������ ȣ���ҰŸ� Implementaion�� ����.
+	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
 
 	void SetActionState();
 
@@ -100,18 +109,18 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EndPickUp();
 
-	UFUNCTION(BlueprintCallable)
-	void ReportNoise(USoundBase* Sound, float Volume);
-
-	UPROPERTY(VisibleAnywhere)
-	UPawnNoiseEmitterComponent* NoiseEmitterComponent;
-
-	UPROPERTY(EditAnywhere)
-	UTraceComponent* TraceComponent;
-
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 	void Die();
+
+	UFUNCTION(BlueprintCallable)
+	void FallEquipped();
+
+	UFUNCTION(BlueprintCallable)
+	void AttachToFlashLight();
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UTraceComponent> TraceComponent;
 
 	UPROPERTY(VisibleAnywhere)
 	FVector HitTarget;
@@ -123,10 +132,10 @@ protected:
 	TScriptInterface<IInteractInterface> InteractItem;
 
 	UPROPERTY(VisibleAnywhere)
-	AWeapon* DefaultWeapon;
+	TObjectPtr<AWeapon> DefaultWeapon;
 
 	UPROPERTY(VisibleAnywhere)
-	class AAmmoPickUp* AmmoPickup;
+	TObjectPtr<AAmmoPickUp> AmmoPickup;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	EFlashLightState FlashLightState;
@@ -137,105 +146,106 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	EDeathState DeathState = EDeathState::EDS_Alive;
 
+	// Turn In Place 
+
+	UPROPERTY(VisibleAnywhere)
+	ETurnInPlace TurnInPlace;
+
 	void AimOffset(float DeltaTime);
 
 	float CalculateSpeed();
 
 	void TurningInPlace(float DeltaTime);
 
-	UFUNCTION(BlueprintCallable)
-	void FallEquipped();
+	float AO_Yaw;
+	float AO_Pitch;
+	float Interp_AO_Yaw;
 
-	UPROPERTY(VisibleAnywhere)
-	ETurnInPlace TurnInPlace;
+	FRotator StartAimRotation;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	bool bAiming;
+	bool bRotateRootBone;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	bool IsSequenceUse = false;
+	// Input
 
-	class UHMOverlay* HMOverlay;
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputMappingContext> CharacterMappingContext;
 
-	FTimerHandle HitHandle;
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> MoveAction;
 
-	UPROPERTY(EditAnywhere)
-	float HitDelay = 0.2f;
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> JumpAction;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class UAttributeComponent* StatComponent;
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> LookAction;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> RunPressedAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> RunReleasedAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> InteractAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> FlashOnOffAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> AimPressedAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> AimReleasedAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> FireAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> ReloadAction;
+
+	// AnimMontage
+
+	UPROPERTY(EditAnywhere, Category = "AnimMontage")
+	TObjectPtr<UAnimMontage> PickupMontage;
+
+	UPROPERTY(EditAnywhere, Category = "AnimMontage")
+	TObjectPtr<UAnimMontage> ReloadMontage;
+
+	UPROPERTY(EditAnywhere, Category = "AnimMontage")
+	TObjectPtr<UAnimMontage> HitMontage;
+
+	UPROPERTY(EditAnywhere, Category = "AnimMontage")
+	TObjectPtr<UAnimMontage> DeathMontage;
+
+	// Sound
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	TObjectPtr<USoundBase> NoAmmoSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	TObjectPtr<USoundBase> HitSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
 	TObjectPtr<USoundBase> BreathSound;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Sound")
 	TObjectPtr<UAudioComponent> BreathSoundComponent;
 
 	UPROPERTY(EditAnywhere)
 	bool IsPlayingBreathSound = false;
 
-	UPROPERTY(EditAnywhere)
-	float HittedTime = 0.f;
-private:
+	// FOV
+	
+	float DefaultFOV;
 
-	UPROPERTY(EditAnywhere, Category = Input)
-	class UInputMappingContext* CharacterMappingContext;
-
-	UPROPERTY(EditAnywhere, Category = Input)
-	class UInputAction* MoveAction;
-
-	UPROPERTY(EditAnywhere, Category = Input)
-	UInputAction* JumpAction;
-
-	UPROPERTY(EditAnywhere, Category = Input)
-	UInputAction* LookAction;
-
-	UPROPERTY(EditAnywhere, Category = Input)
-	UInputAction* RunPressedAction;
-
-	UPROPERTY(EditAnywhere, Category = Input)
-	UInputAction* RunReleasedAction;
-
-	UPROPERTY(EditAnywhere, Category = Input)
-	UInputAction* InteractAction;
-
-	UPROPERTY(EditAnywhere, Category = Input)
-	UInputAction* FlashOnOffAction;
-
-	UPROPERTY(EditAnywhere, Category = Input)
-	UInputAction* AimPressedAction;
-
-	UPROPERTY(EditAnywhere, Category = Input)
-	UInputAction* AimReleasedAction;
-
-	UPROPERTY(EditAnywhere, Category = Input)
-	UInputAction* FireAction;
-
-	UPROPERTY(EditAnywhere, Category = Input)
-	UInputAction* ReloadAction;
-
-	UPROPERTY(VisibleAnywhere, Category = Camera)
-	class USpringArmComponent* SpringArm;
-
-	UCharacterMovementComponent* CharacterMovement;
+	float CurrentFOV;
 
 	UPROPERTY(EditAnywhere)
-	class UAnimMontage* PickupMontage;
+	float ZoomedFOV = 30.f;
 
 	UPROPERTY(EditAnywhere)
-	UAnimMontage* ReloadMontage;
+	float ZoomInterpSpeed = 30.f;
 
-	UPROPERTY(EditAnywhere)
-	UAnimMontage* HitMontage;
-
-	UPROPERTY(EditAnywhere)
-	UAnimMontage* DeathMontage;
-
-	UPROPERTY(EditAnywhere)
-	class USoundBase* NoAmmoSound;
-
-	UPROPERTY(EditAnywhere)
-	USoundBase* HitSound;
 
 	UPROPERTY(EditAnywhere)
 	float CameraDistanceThresHold = 150.f;
@@ -246,32 +256,37 @@ private:
 	UPROPERTY(EditAnywhere)
 	float MaxHP = 100.f;
 
-	float AO_Yaw;
-	float AO_Pitch;
-	float Interp_AO_Yaw;
+	UPROPERTY()
+	TObjectPtr<APlayerController> PlayerController;
 
-	bool bRotateRootBone;
+	UPROPERTY()
+	TObjectPtr<AHMController> HMController;
 
-	FRotator StartAimRotation;
+	UPROPERTY()
+	TObjectPtr<AHMHUD> HMHUD;
 
-	UFUNCTION(BlueprintCallable)
-	void AttachToFlashLight();
+	UPROPERTY()
+	TObjectPtr<UHMOverlay> HMOverlay;
 
-	APlayerController* PlayerController;
+	FTimerHandle HitHandle;
 
-	class AHMController* HMController;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAttributeComponent> StatComponent;
 
-	class AHMHUD* HMHUD;
+	UPROPERTY(VisibleAnywhere, Category = Camera)
+	USpringArmComponent* SpringArm;
 
-	float DefaultFOV;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bAiming = false;
 
-	float CurrentFOV;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool IsSequenceUse = false;
 
 	UPROPERTY(EditAnywhere)
-	float ZoomedFOV = 30.f;
+	float HitDelay = 0.2f;
 
 	UPROPERTY(EditAnywhere)
-	float ZoomInterpSpeed = 30.f;
+	float HittedTime = 0.f;
 
 public:
 
