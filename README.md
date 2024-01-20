@@ -18,7 +18,7 @@
 #### 활용 스킬 - C++, Unreal Engine5**
 ---
 ### 기술 포트폴리오(노션)
-####https://wary-birth-aca.notion.site/Haunted-Mansion-8d50e5d3144242c69c7867b32a672be4?pvs=4
+#### https://wary-birth-aca.notion.site/Haunted-Mansion-8d50e5d3144242c69c7867b32a672be4?pvs=4
 ---
 ### 플레이 영상
 [![Video Label](http://img.youtube.com/vi/'UeuZ0qxecZ8'/0.jpg)](https://youtu.be/'UeuZ0qxecZ8&t=1s')
