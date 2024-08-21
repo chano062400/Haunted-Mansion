@@ -16,6 +16,8 @@
 #### 담당 업무 - 2층 영혼 제외 모든 부분 담당 및 개발 총괄(Player, Weapon, SkeletonWarrior, Item, UI, 레벨 시퀀스 제작(Skeleton, Book, 엔딩))**
 
 #### 활용 스킬 - C++, Unreal Engine5**
+
+#### 노션 링크 - https://wary-birth-aca.notion.site/Haunted-Mansion-a9c036f045f747f3b1c50ab1643a0038?pvs=4
 ---
 ### 플레이 영상
 [![Video Label](http://img.youtube.com/vi/UeuZ0qxecZ8/0.jpg)](https://www.youtube.com/watch?v=UeuZ0qxecZ8&t=1s) 
